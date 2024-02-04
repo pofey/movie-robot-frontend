@@ -15,7 +15,12 @@ export const useDoubanRanking = (param) => {
         client("/api/movie/douban_rank_list", { params: param })
     );
 }
-
+export const useGetPlaylistItems = (param) => {
+    const client = useHttp();
+    return useQuery(['playlist_items', param], () =>
+      client("/api/movie/playlist_items", { params: param })
+    );
+}
 export const useGetDoubanSuggestion = () => {
     const client = useHttp();
     return useInfiniteQuery(['douban_suggestion'],

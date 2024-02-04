@@ -26,7 +26,7 @@ function getTitle(media) {
 
     if (media?.type === "Movie") {
         return media?.cn_name || media?.en_name;
-    } else if (media?.type === "TV") {
+    } else if (media?.type === "TV"&&media.season_index) {
         return (media?.cn_name || media?.en_name) + " 第" + media.season_index + "季";
     } else {
         return media?.cn_name || media?.en_name;
@@ -84,6 +84,7 @@ const ListView = ({items, isLoading, showSubLogs}) => {
                             showBottomTitle={true}
                             subject={<RatingLabel rating={title?.rating}/>}
                             showSubLogs={showSubLogs}
+                            season={title?.season}
                         />
                     </li>;
                 })
