@@ -25,8 +25,8 @@ const Wall = ({trendingType, showSubLogs}) => {
                         status: item.status,
                         release_year: item.releaseYear,
                         type: item.mediaType,
-                        url: item.url,
-                        app_url: item.app_url,
+                        url: `https://movie.douban.com/subject/${item.doubanId}/`,
+                        app_url: `douban://douban.com/movie/${item.doubanId}`,
                         desc: item.intro
                     }
                 }) ?? []}
