@@ -17,6 +17,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import CheckIcon from "@mui/icons-material/Check";
 import LogoDevIcon from "@mui/icons-material/LogoDev";
 import CloudIcon from '@mui/icons-material/Cloud';
+import CookieIcon from '@mui/icons-material/Cookie';
 function AdvancedSettingList() {
   const navigate = useNavigate();
   const { data: settingStatus, refetch } = useGetSettingStatus();
@@ -131,6 +132,15 @@ function AdvancedSettingList() {
             <LogoDevIcon fontSize={"large"} />
           </ListItemIcon>
           <ListItemText primary="API密钥管理" />
+          <ArrowForwardIosOutlinedIcon color="disabled" />
+        </ListItemButton>
+      </ListItem>
+      <ListItem>
+        <ListItemButton onClick={() => navigate("/setting/cookie-cloud")}>
+          <ListItemIcon>
+            <CookieIcon fontSize={"large"} />
+          </ListItemIcon>
+          <ListItemText primary="CookieCloud设置" />
           <ArrowForwardIosOutlinedIcon color="disabled" />
         </ListItemButton>
       </ListItem>

@@ -47,6 +47,7 @@ const EditFanArt = async(() => import("./pages/setting/MovieMetadata/EditFanArt"
 const EditDouban = async(() => import("./pages/setting/MovieMetadata/EditDouban"));
 const EditWeb = async(() => import("./pages/setting/Advanced/EditWeb"));
 const PassCloudflare = async(() => import("./pages/setting/Advanced/PassCloudflare"));
+const CookieCloud = async(() => import("./pages/setting/Advanced/CookieCloud"));
 const EditNotify = async(() => import("./pages/setting/Notify/Edit"));
 const EditFreeDownload = async(() => import("./pages/setting/Advanced/EditFreeDownload"));
 const EditSubtitle = async(() => import("./pages/setting/Advanced/EditSubtitle"));
@@ -163,6 +164,9 @@ const routes = [{
     }, {
       path: "pass-cloudflare",
       element: <PassCloudflare />
+    }, {
+      path: "cookie-cloud",
+      element: <CookieCloud />
     }
   ]
 }, {

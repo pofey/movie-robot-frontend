@@ -99,6 +99,33 @@ export const useSavePassCloudflare = (param) => {
   );
 };
 
+export const useGetCookieCloud = (param) => {
+  const client = useHttp();
+  return useQuery(["get_cookie_cloud", param], () =>
+    client("/api/setting/get_cookie_cloud", { params: param, method: "GET" })
+  );
+};
+export const useSaveCookieCloud = (param) => {
+  const client = useHttp();
+  return useMutation(
+    (params) =>
+      client("/api/setting/save_cookie_cloud", { params: params, method: "POST" })
+  );
+};
+
+export const useCheckCookieCloud = (param) => {
+  const client = useHttp();
+  return useQuery(["check_cookie_cloud", param], () =>
+    client("/api/setting/check_cookie_cloud", { params: param, method: "GET" })
+  );
+};
+export const useGetCookiesFromCookieCloud = (param) => {
+  const client = useHttp();
+  return useMutation(
+    (params) =>
+      client("/api/setting/get_cookies_from_cookie_cloud", { params: params, method: "GET" })
+  );
+};
 export const useGetNotifySetting = (param) => {
   const client = useHttp();
   return useQuery(["getNotifySetting", param], () =>

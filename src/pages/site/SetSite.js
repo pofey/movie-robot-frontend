@@ -17,8 +17,13 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import axios from "../../utils/request";
+import { useGetCookiesFromCookieCloud } from "@/api/SettingApi";
 
-
+const AUTH_TYPES = {
+  "cookies": "Cookies认证",
+  "user": "用户名密码认证",
+  "api_key": "API密钥"
+};
 const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEditSuccess, onEditFailed }) => {
   const [values, setValues] = React.useState({
     site_name: "mteam",
@@ -31,15 +36,17 @@ const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEdi
     user_agent: "",
     auth_type: "user",
     auth_username: "",
-    auth_password: ""
+    auth_password: "",
+    api_key: ""
   });
+  const { mutate: getCookies } = useGetCookiesFromCookieCloud();
   const [siteData, setSiteData] = useState(siteMeta);
   const [errors, setErrors] = React.useState({});
   const [showErrors, setShowErrors] = React.useState({});
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState();
   const [errorMessage, setErrorMessage] = useState();
-
+  const [allowAuthType, setAllowAuthType] = useState(["cookies", "user", "api_key"]);
   const handleValueChange = (e) => {
     if (e.target.type === "checkbox") {
       setValues({ ...values, [e.target.name]: e.target.checked });
@@ -102,17 +109,31 @@ const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEdi
       setSiteData(siteMeta);
     }
     if (site !== undefined && site !== null) {
-      setValues({
-        site_name: site.site_name,
-        cookie: site.cookie,
-        web_search: site.web_search === 1,
-        smart_download: site.smart_download === 1,
-        traffic_management_status: site.traffic_management_status,
-        upload_kpi: site.upload_kpi,
-        proxies: site?.proxies,
-        user_agent: site?.user_agent ? site.user_agent : "",
-        auth_username: site?.auth_username ? site.auth_username : "",
-        auth_type: site?.auth_username ? "user" : "cookies"
+      if (site.allow_auth_type) {
+        setAllowAuthType(site.allow_auth_type);
+      }
+      getCookies({
+        domain: site.domain
+      }, {
+        onSuccess: (res) => {
+          let cookies = "";
+          if (res.data) {
+            cookies = res.data;
+          }
+          setValues({
+            site_name: site.site_name,
+            cookie: cookies || site.cookie,
+            web_search: site.web_search === 1,
+            smart_download: site.smart_download === 1,
+            traffic_management_status: site.traffic_management_status,
+            upload_kpi: site.upload_kpi,
+            proxies: site?.proxies,
+            user_agent: site?.user_agent ? site.user_agent : "",
+            auth_username: site?.auth_username ? site.auth_username : "",
+            auth_type: site?.auth_type ? site?.auth_type : "cookies",
+            api_key: site?.api_key ? site.api_key : ""
+          });
+        }
       });
     } else {
       setValues({
@@ -126,7 +147,8 @@ const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEdi
         user_agent: "",
         auth_type: "user",
         auth_username: "",
-        auth_password: ""
+        auth_password: "",
+        api_key: ""
       });
     }
   }, [opType, site, filterSiteNames]);
@@ -150,7 +172,31 @@ const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEdi
         <Select
           name="site_name"
           value={values.site_name}
-          onChange={(e) => handleValueChange(e)}
+          onChange={(e) => {
+            handleValueChange(e);
+            const site = siteMeta.find((item) => item.id === e.target.value);
+            if (site) {
+              setAllowAuthType(site.allow_auth_type);
+            }
+            const domain = site?.domain;
+            if (domain) {
+              getCookies({
+                domain
+              }, {
+                onSuccess: (res) => {
+                  let cookies = "";
+                  if (res.data) {
+                    cookies = res.data;
+                  }
+                  setValues(currentValues => ({
+                    ...currentValues,
+                    cookie: cookies,
+                    site_name: e.target.value
+                  }));
+                }
+              });
+            }
+          }}
           disabled={opType === "update"}
         >
           {siteData && siteData.map((row) => (
@@ -164,11 +210,28 @@ const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEdi
           value={values.auth_type}
           onChange={(e) => handleValueChange(e)}
         >
-          <MenuItem value="cookies">Cookies认证</MenuItem>
-          <MenuItem value="user">用户名密码认证</MenuItem>
+          {allowAuthType && allowAuthType.length > 0 && allowAuthType.map((item) => (
+            <MenuItem key={item} value={item}>{AUTH_TYPES[item]}</MenuItem>
+          ))}
         </Select>
-        <FormHelperText>信息采用AES加密存储在本地；支持绝大部分站点，如遇频繁失败请不要一直尝试，避免被封</FormHelperText>
+        <FormHelperText>敏感信息采用AES加密存储在本地；</FormHelperText>
       </FormControl>
+      {values.auth_type === "api_key" && <>
+        <TextField
+          type="text"
+          name="api_key"
+          margin="dense"
+          label="API密钥"
+          fullWidth
+          value={values.api_key}
+          onChange={handleValueChange}
+          error={Boolean(showErrors.api_key && errors.api_key)}
+          helperText={(showErrors.api_key && errors.api_key) || (
+            <span>
+                        使用网站提供的apiKey获取信息（需站点支持）
+                    </span>
+          )}
+        /></>}
       {values.auth_type === "cookies" && <>
         <TextField
           type="text"
@@ -176,7 +239,7 @@ const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEdi
           margin="dense"
           label="Cookie"
           fullWidth
-          defaultValue={values.cookie}
+          value={values.cookie}
           onChange={handleValueChange}
           error={Boolean(showErrors.cookie && errors.cookie)}
           helperText={(showErrors.cookie && errors.cookie) || (
@@ -195,7 +258,7 @@ const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEdi
           margin="dense"
           label="User-Agent"
           fullWidth
-          defaultValue={values.user_agent}
+          value={values.user_agent}
           onChange={handleValueChange}
           error={Boolean(showErrors.user_agent && errors.user_agent)}
           helperText={(showErrors.user_agent && errors.user_agent) || (
@@ -212,7 +275,7 @@ const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEdi
           margin="dense"
           label="登录用户名"
           fullWidth
-          defaultValue={values.auth_username}
+          value={values.auth_username}
           onChange={handleValueChange}
           error={Boolean(showErrors.auth_username && errors.auth_username)}
           helperText={(showErrors.auth_username && errors.auth_username) || (
@@ -227,7 +290,7 @@ const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEdi
           margin="dense"
           label="登录密码"
           fullWidth
-          defaultValue={values.auth_password}
+          value={values.auth_password}
           onChange={handleValueChange}
           error={Boolean(showErrors.auth_password && errors.auth_password)}
           helperText={(showErrors.auth_password && errors.auth_password) || (
@@ -241,7 +304,7 @@ const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEdi
         type="text"
         name="proxies"
         label="代理设置"
-        defaultValue={values.proxies}
+        value={values.proxies}
         onChange={handleValueChange}
         error={Boolean(showErrors.proxies && errors.proxies)}
         helperText={(showErrors.proxies && errors.proxies) || (
@@ -272,7 +335,7 @@ const SetSite = ({ opType, open, site, siteMeta, filterSiteNames, onClose, onEdi
         margin="dense"
         label="上传量目标"
         fullWidth
-        defaultValue={values.upload_kpi}
+        value={values.upload_kpi}
         onChange={handleValueChange}
         error={Boolean(showErrors.upload_kpi && errors.upload_kpi)}
         disabled={values.traffic_management_status !== 1}
